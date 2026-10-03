@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>Download Your Photos · Kawula Booth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #111827; --muted: #6b7280; --faint: #9ca3af; --line: #e5e7eb; --pill: #f3f4f6;
+      --page: #ffffff; --stage: #000000; --accent: #111827; --accent-ink: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--page); color: var(--ink); }
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+    .wrap { max-width: 540px; margin: 0 auto; padding: 28px 16px 40px; overflow-x: hidden; }
+
+    h1 { font-size: clamp(26px, 7vw, 32px); font-weight: 800; text-align: center; margin: 0; letter-spacing: -0.02em; }
+    .code { text-align: center; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; color: var(--faint); margin-top: 10px; }
+    .pill { display: flex; width: fit-content; margin: 14px auto 0; align-items: center; gap: 8px; background: var(--pill);
+            border-radius: 999px; padding: 7px 14px; font-size: 12.5px; color: var(--muted); }
+    .pill b { font-family: "JetBrains Mono", ui-monospace, monospace; color: var(--ink); font-weight: 600; }
+    .pill svg { width: 15px; height: 15px; flex: none; }
+    hr { border: 0; border-top: 1px solid var(--line); margin: 22px 0 24px; }
+
+    .stage { position: relative; width: 100%; background: var(--stage); border-radius: 14px; overflow: hidden; aspect-ratio: 1 / 1;
+             box-shadow: 0 10px 30px rgba(17, 24, 39, .18); }
+    /* Media mengisi panggung secara absolut agar ukuran asli foto tidak pernah melebarkan halaman. */
+    #media { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    #media img, #media video { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .nav { position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%;
+           border: 0; background: rgba(17, 24, 39, .55); color: #fff; cursor: pointer; display: grid; place-items: center; }
+    .nav:disabled { opacity: .25; cursor: default; }
+    .nav.prev { left: 12px; } .nav.next { right: 12px; }
+    .tool { position: absolute; top: 12px; width: 36px; height: 36px; border: 0; border-radius: 10px; background: rgba(17, 24, 39, .35);
+            color: #fff; cursor: pointer; display: grid; place-items: center; }
+    .tool:hover, .nav:not(:disabled):hover { background: rgba(255, 255, 255, .18); }
+    .tool.full { right: 10px; } .tool.save { right: 50px; }
+    .counter { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 12.5px;
+               font-weight: 600; background: rgba(17, 24, 39, .55); padding: 3px 10px; border-radius: 999px; }
+    .badge { position: absolute; top: 14px; left: 14px; background: rgba(255, 255, 255, .92); color: var(--ink);
+             font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 999px; }
+    svg { width: 18px; height: 18px; }
+
+    .thumbs { display: flex; gap: 8px; overflow-x: auto; padding: 18px 2px 6px; scrollbar-width: none; }
+    .thumbs::-webkit-scrollbar { display: none; }
+    .thumb { position: relative; flex: none; width: 58px; height: 58px; border-radius: 10px; overflow: hidden; padding: 0;
+             border: 3px solid transparent; background: #e5e7eb; cursor: pointer; }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .thumb.active { border-color: var(--ink); box-shadow: 0 0 0 2px #fff inset; }
+    .thumb .play { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; background: rgba(0, 0, 0, .18); }
+    .thumb .play svg { width: 20px; height: 20px; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .5)); }
+
+    .btn { width: 100%; margin-top: 18px; display: flex; align-items: center; justify-content: center; gap: 10px;
+           background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 12px; padding: 15px 18px;
+           font: 600 15px Inter, system-ui, sans-serif; cursor: pointer; }
+    .btn:disabled { opacity: .6; cursor: progress; }
+    .hint { text-align: center; color: var(--muted); font-size: 13px; margin-top: 14px; line-height: 1.5; }
+    .hint a { color: var(--ink); }
+
+    .state { text-align: center; padding: 56px 12px; color: var(--muted); }
+    .state h2 { color: var(--ink); font-size: 18px; margin: 14px 0 6px; }
+    .spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--ink);
+               margin: 0 auto; animation: spin .9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    footer { text-align: center; color: var(--faint); font-size: 12px; margin-top: 28px; }
+
+    .stage:fullscreen { border-radius: 0; aspect-ratio: auto; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Download Your Photos</h1>
+    <div class="code" id="code"></div>
+    <div class="pill" id="expiryPill" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <span>Link kadaluarsa dalam</span> <b id="countdown">–</b>
+    </div>
+    <hr>
+
+    <section id="loading" class="state"><div class="spinner"></div><h2>Memuat foto…</h2></section>
+
+    <section id="message" class="state" hidden>
+      <div id="messageIcon" style="font-size:34px"></div>
+      <h2 id="messageTitle"></h2>
+      <div id="messageText"></div>
+    </section>
+
+    <section id="gallery" hidden>
+      <div class="stage" id="stage">
+        <div id="media"></div>
+        <span class="badge" id="badge" hidden></span>
+        <button class="tool save" id="saveOne" title="Download file ini" aria-label="Download file ini">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>
+        </button>
+        <button class="tool full" id="fullscreen" title="Layar penuh" aria-label="Layar penuh">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        </button>
+        <button class="nav prev" id="prev" aria-label="Sebelumnya">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <button class="nav next" id="next" aria-label="Berikutnya">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <span class="counter" id="counter"></span>
+      </div>
+
+      <div class="thumbs" id="thumbs"></div>
+
+      <button class="btn" id="downloadAll">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>
+        <span id="downloadAllText">Download Semua</span>
+      </button>
+      <div class="hint" id="moreHint" hidden>Sebagian foto mungkin masih diupload dari booth — halaman ini memperbarui otomatis.</div>
+    </section>
+
+    <footer>Kawula Booth</footer>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    var API_KEY = (window.KAWULA_CONFIG && window.KAWULA_CONFIG.driveApiKey) || "";
+    var params = new URLSearchParams(location.search);
+    var folderId = params.get("f") || "";
+    var code = (params.get("s") || "").replace(/[^0-9A-Za-z]/g, "").slice(0, 12);
+    var expiresAt = parseInt(params.get("x") || "0", 10) * 1000;
+
+    var el = function (id) { return document.getElementById(id); };
+    var files = [];
+    var index = 0;
+    var pollCount = 0;
+
+    // ── Jenis & urutan file dari nama yang diberikan booth ───────────────────
+    function classify(name) {
+      var n = name.toLowerCase(), m;
+      if (/^foto-bingkai\./.test(n)) return { order: 0, label: "Foto", animated: false };
+      if (/^live-bingkai\./.test(n)) return { order: 1, label: "Live", animated: true };
+      if (/^animasi\./.test(n)) return { order: 2, label: "GIF", animated: true };
+      if ((m = /^foto-(\d+)\./.exec(n))) return { order: 10 + +m[1], label: "Foto " + m[1], animated: false };
+      if ((m = /^live-(\d+)\./.exec(n))) return { order: 100 + +m[1], label: "Live " + m[1], animated: true };
+      if (/\.(mp4|mov)$/.test(n)) return { order: 200, label: "Video", animated: true, video: true };
+      return { order: 300, label: "", animated: /\.gif$/.test(n) };
+    }
+
+    function mediaUrl(f) {
+      return "https://www.googleapis.com/drive/v3/files/" + encodeURIComponent(f.id) + "?alt=media&key=" + encodeURIComponent(API_KEY);
+    }
+    function thumbUrl(f) { return "https://drive.google.com/thumbnail?id=" + encodeURIComponent(f.id) + "&sz=w240"; }
+
+    // ── Status halaman ───────────────────────────────────────────────────────
+    function show(section) {
+      ["loading", "message", "gallery"].forEach(function (s) { el(s).hidden = s !== section; });
+    }
+    function message(icon, title, text) {
+      el("messageIcon").textContent = icon;
+      el("messageTitle").textContent = title;
+      el("messageText").textContent = text;
+      show("message");
+    }
+
+    // ── Hitung mundur ────────────────────────────────────────────────────────
+    function pad(n) { return (n < 10 ? "0" : "") + n; }
+    function tick() {
+      if (!expiresAt) return;
+      var left = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+      var d = Math.floor(left / 86400), h = Math.floor(left % 86400 / 3600), m = Math.floor(left % 3600 / 60), s = left % 60;
+      el("countdown").textContent = (d > 0 ? d + " hari " : "") + pad(h) + ":" + pad(m) + ":" + pad(s);
+      if (left === 0) { expired(); }
+    }
+    function expired() {
+      el("expiryPill").hidden = true;
+      message("⏳", "Link sudah kadaluarsa", "Foto dari sesi ini sudah tidak bisa diunduh lewat link ini. Hubungi penyelenggara event bila masih membutuhkannya.");
+    }
+
+    // ── Ambil daftar file folder sesi ────────────────────────────────────────
+    function load() {
+      var q = "'" + folderId + "' in parents and trashed = false";
+      var url = "https://www.googleapis.com/drive/v3/files?pageSize=100&fields=files(id,name,mimeType,size)"
+              + "&q=" + encodeURIComponent(q) + "&key=" + encodeURIComponent(API_KEY);
+      return fetch(url).then(function (r) {
+        if (r.status === 403 || r.status === 404) { throw { kind: "gone" }; }
+        if (!r.ok) { throw { kind: "error" }; }
+        return r.json();
+      }).then(function (data) {
+        return (data.files || [])
+          .filter(function (f) { return /^(image|video)\//.test(f.mimeType); })
+          .map(function (f) { var c = classify(f.name); return Object.assign({}, f, c); })
+          .sort(function (a, b) { return a.order - b.order || a.name.localeCompare(b.name); });
+      });
+    }
+
+    function refresh() {
+      if (expiresAt && Date.now() > expiresAt) { expired(); return; }
+      load().then(function (list) {
+        var changed = list.length !== files.length;
+        if (list.length === 0) {
+          message("📤", "Foto sedang diupload", "Booth sedang mengirim foto ke cloud. Halaman ini akan memuat otomatis — biarkan tetap terbuka.");
+        } else if (changed) {
+          var currentId = files[index] && files[index].id;
+          files = list;
+          var keep = files.findIndex(function (f) { return f.id === currentId; });
+          index = keep >= 0 ? keep : 0;
+          render();
+          show("gallery");
+        }
+        schedule(list.length === 0 ? 10000 : 30000);
+      }).catch(function (err) {
+        if (err && err.kind === "gone") {
+          message("🔒", "Link tidak aktif", "Link ini sudah kadaluarsa atau tidak ditemukan.");
+        } else if (files.length === 0) {
+          message("⚠️", "Gagal memuat foto", "Periksa koneksi internet lalu muat ulang halaman ini.");
+          schedule(15000);
+        }
+      });
+    }
+    function schedule(ms) {
+      // Memperbarui sampai ±15 menit setelah dibuka (upload dari booth biasanya selesai jauh sebelum itu).
+      if (++pollCount < 60) { setTimeout(refresh, ms); el("moreHint").hidden = files.length === 0; }
+      else { el("moreHint").hidden = true; }
+    }
+
+    // ── Galeri ───────────────────────────────────────────────────────────────
+    function render() {
+      var thumbs = el("thumbs");
+      thumbs.innerHTML = "";
+      files.forEach(function (f, i) {
+        var b = document.createElement("button");
+        b.className = "thumb" + (i === index ? " active" : "");
+        b.setAttribute("aria-label", f.label || f.name);
+        var img = document.createElement("img");
+        img.loading = "lazy";
+        img.alt = "";
+        img.src = thumbUrl(f);
+        img.onerror = function () { if (!f.video) { img.onerror = null; img.src = mediaUrl(f); } };
+        b.appendChild(img);
+        if (f.animated) {
+          var p = document.createElement("span");
+          p.className = "play";
+          p.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+          b.appendChild(p);
+        }
+        b.onclick = function () { go(i); };
+        thumbs.appendChild(b);
+      });
+      el("downloadAllText").textContent = "Download Semua (" + files.length + " file)";
+      showCurrent();
+    }
+
+    function showCurrent() {
+      var f = files[index];
+      var media = el("media");
+      media.innerHTML = "";
+      var node;
+      if (f.video) {
+        node = document.createElement("video");
+        node.controls = true; node.playsInline = true; node.loop = true;
+      } else {
+        node = document.createElement("img");
+        node.alt = f.label || "Foto";
+      }
+      node.src = mediaUrl(f);
+      media.appendChild(node);
+      el("counter").textContent = (index + 1) + " / " + files.length;
+      el("badge").textContent = f.label;
+      el("badge").hidden = !f.label;
+      el("prev").disabled = index === 0;
+      el("next").disabled = index === files.length - 1;
+      Array.prototype.forEach.call(el("thumbs").children, function (t, i) {
+        t.classList.toggle("active", i === index);
+        if (i === index) t.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+      });
+    }
+
+    function go(i) {
+      if (i < 0 || i >= files.length) return;
+      index = i;
+      showCurrent();
+    }
+
+    // Geser kiri/kanan di layar sentuh.
+    var touchX = null;
+    el("stage").addEventListener("touchstart", function (e) { touchX = e.touches[0].clientX; }, { passive: true });
+    el("stage").addEventListener("touchend", function (e) {
+      if (touchX === null) return;
+      var dx = e.changedTouches[0].clientX - touchX;
+      if (Math.abs(dx) > 45) go(index + (dx < 0 ? 1 : -1));
+      touchX = null;
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft") go(index - 1);
+      if (e.key === "ArrowRight") go(index + 1);
+    });
+    el("prev").onclick = function () { go(index - 1); };
+    el("next").onclick = function () { go(index + 1); };
+    el("fullscreen").onclick = function () {
+      var s = el("stage");
+      if (document.fullscreenElement) { document.exitFullscreen(); }
+      else if (s.requestFullscreen) { s.requestFullscreen(); }
+      else if (s.webkitRequestFullscreen) { s.webkitRequestFullscreen(); }
+    };
+
+    // ── Download ─────────────────────────────────────────────────────────────
+    function fetchBlob(f) {
+      return fetch(mediaUrl(f)).then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.blob();
+      });
+    }
+    function saveBlob(blob, name) {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+    }
+    function uniqueNames(list) {
+      var used = {};
+      return list.map(function (f) {
+        var name = f.name, i = 1;
+        while (used[name]) { name = f.name.replace(/(\.[^.]+)?$/, "-" + (++i) + "$1"); }
+        used[name] = true;
+        return name;
+      });
+    }
+
+    el("saveOne").onclick = function () {
+      var f = files[index];
+      fetchBlob(f).then(function (b) { saveBlob(b, f.name); }).catch(function () { window.open(mediaUrl(f), "_blank"); });
+    };
+
+    el("downloadAll").onclick = function () {
+      var btn = el("downloadAll"), text = el("downloadAllText");
+      if (!window.JSZip) { alert("Gagal memuat pembuat ZIP. Download satu per satu lewat tombol unduh di foto."); return; }
+      btn.disabled = true;
+      var zip = new JSZip(), names = uniqueNames(files), done = 0;
+      text.textContent = "Menyiapkan 0/" + files.length + "…";
+      Promise.all(files.map(function (f, i) {
+        return fetchBlob(f).then(function (blob) {
+          zip.file(names[i], blob);
+          text.textContent = "Menyiapkan " + (++done) + "/" + files.length + "…";
+        });
+      })).then(function () {
+        text.textContent = "Membuat ZIP…";
+        return zip.generateAsync({ type: "blob" });
+      }).then(function (blob) {
+        saveBlob(blob, "kawula-booth-" + (code || "foto") + ".zip");
+      }).catch(function () {
+        alert("Sebagian file gagal diunduh. Periksa koneksi lalu coba lagi.");
+      }).then(function () {
+        btn.disabled = false;
+        text.textContent = "Download Semua (" + files.length + " file)";
+      });
+    };
+
+    // ── Mulai ────────────────────────────────────────────────────────────────
+    el("code").textContent = code ? "#" + code.toUpperCase() : "";
+    if (!/^[A-Za-z0-9_-]{10,}$/.test(folderId)) {
+      message("🔗", "Link tidak valid", "Scan ulang QR dari hasil cetak foto kamu.");
+      return;
+    }
+    if (!API_KEY || API_KEY.indexOf("PASTE") === 0) {
+      message("⚙️", "Halaman belum dikonfigurasi", "Pemilik booth perlu mengisi Google API key di config.js.");
+      return;
+    }
+    if (expiresAt) {
+      el("expiryPill").hidden = false;
+      tick();
+      if (Date.now() > expiresAt) return;
+      setInterval(tick, 1000);
+    }
+    refresh();
+  })();
+  </script>
+</body>
+</html>
