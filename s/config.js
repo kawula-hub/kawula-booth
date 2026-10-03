@@ -5,5 +5,5 @@
 //   - Application restrictions → Websites → https://NAMAKAMU.github.io/*
 //   - API restrictions → Restrict key → Google Drive API saja
 window.KAWULA_CONFIG = {
-  driveApiKey: "PASTE_API_KEY_DI_SINI",
+  driveApiKey: "AIzaSyA5Pmz1pRT-3TLOUrRBcqltc-6NSSNYXVI",
 };
