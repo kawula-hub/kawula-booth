@@ -170,6 +170,9 @@
     // ── Jenis & urutan file dari nama yang diberikan booth ───────────────────
     function classify(name) {
       var n = name.toLowerCase(), m;
+      // Versi MP4 (untuk IG Story/Reels & WhatsApp) diputar sebagai video, tepat setelah versi GIF-nya.
+      if (/^live-bingkai\.(mp4|mov)$/.test(n)) return { order: 1.5, label: "Live · Video", animated: true, video: true };
+      if (/^animasi\.(mp4|mov)$/.test(n)) return { order: 2.5, label: "Video", animated: true, video: true };
       if (/^foto-bingkai\./.test(n)) return { order: 0, label: "Foto", animated: false };
       if (/^live-bingkai\./.test(n)) return { order: 1, label: "Live", animated: true };
       if (/^animasi\./.test(n)) return { order: 2, label: "GIF", animated: true };
@@ -307,7 +310,8 @@
       var node;
       if (f.video) {
         node = document.createElement("video");
-        node.controls = true; node.playsInline = true; node.loop = true;
+        // Tanpa suara, jadi boleh autoplay di HP (iOS/Android hanya mengizinkan autoplay yang muted).
+        node.controls = true; node.playsInline = true; node.loop = true; node.muted = true; node.autoplay = true;
       } else {
         node = document.createElement("img");
         node.alt = f.label || "Foto";
