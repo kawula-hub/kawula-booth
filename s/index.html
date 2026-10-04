@@ -24,12 +24,12 @@
     .page { position: relative; overflow: hidden; min-height: calc(100vh - 38px); }
     .wrap { position: relative; max-width: 560px; margin: 0 auto; padding: 26px 16px 40px; }
 
-    /* Stiker dekorasi (tidak bisa disentuh), seperti layar awal booth */
+    /* Stiker dekorasi tema foto (tidak bisa disentuh), sama dengan layar awal booth */
     .sticker { position: absolute; pointer-events: none; height: auto; overflow: visible; stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; }
-    .s1 { width: 54px; top: 18px; left: -6px; fill: var(--sun); transform: rotate(-12deg); }
-    .s2 { width: 34px; top: 120px; right: 4px; fill: var(--ember); transform: rotate(14deg); }
-    .s3 { width: 42px; top: 330px; left: -10px; fill: var(--sky); transform: rotate(8deg); }
-    .s4 { width: 38px; bottom: 120px; right: -4px; fill: var(--mint); transform: rotate(-10deg); }
+    .s1 { width: 62px; top: 14px; left: -8px; fill: var(--sun); transform: rotate(-12deg); }
+    .s2 { width: 46px; top: 112px; right: 0; fill: var(--lavender); transform: rotate(14deg); }
+    .s3 { width: 46px; top: 326px; left: -12px; fill: var(--sky); transform: rotate(8deg); }
+    .s4 { width: 42px; bottom: 116px; right: -6px; fill: var(--ember); transform: rotate(-10deg); }
 
     .chip { display: block; width: fit-content; margin: 0 auto 14px; background: var(--grape-soft); color: var(--grape-deep);
             font-weight: 700; font-size: 12px; letter-spacing: .06em; padding: 6px 14px; border-radius: 12px; }
@@ -98,10 +98,11 @@
   <div class="bar">KAWULA BOOTH · FOTO KAMU</div>
   <div class="page">
   <main class="wrap">
-    <svg class="sticker s1" viewBox="0 0 100 100"><path d="M50,2 L61.8,33.8 L95.6,35.2 L69,56.2 L78.2,88.8 L50,70 L21.8,88.8 L31,56.2 L4.4,35.2 L38.2,33.8 Z"/></svg>
-    <svg class="sticker s2" viewBox="0 0 100 100"><path d="M50,85 C5,55 5,8 27.5,8 C39,8 50,23 50,23 C50,23 61,8 72.5,8 C95,8 95,55 50,85 Z"/></svg>
-    <svg class="sticker s3" viewBox="0 0 100 100"><path d="M50,4 L60,40 L96,50 L60,60 L50,96 L40,60 L4,50 L40,40 Z"/></svg>
-    <svg class="sticker s4" viewBox="0 0 100 100"><path d="M50,2 L61.8,33.8 L95.6,35.2 L69,56.2 L78.2,88.8 L50,70 L21.8,88.8 L31,56.2 L4.4,35.2 L38.2,33.8 Z"/></svg>
+    <!-- Stiker tema foto — bentuk sama dengan layar booth (kamera, polaroid, strip film, lensa) -->
+    <svg class="sticker s1" viewBox="0 0 100 100"><path fill-rule="evenodd" d="M14,30 H32 L37,20 H63 L68,30 H86 A8,8 0 0 1 94,38 V80 A8,8 0 0 1 86,88 H14 A8,8 0 0 1 6,80 V38 A8,8 0 0 1 14,30 Z M15,30 V24 H26 V30 Z M31,59 A19,19 0 1 1 69,59 A19,19 0 1 1 31,59 Z M40,59 A10,10 0 1 1 60,59 A10,10 0 1 1 40,59 Z M75,36 H87 V44 H75 Z"/></svg>
+    <svg class="sticker s2" viewBox="0 0 100 100"><path fill-rule="evenodd" d="M12,6 H88 A4,4 0 0 1 92,10 V90 A4,4 0 0 1 88,94 H12 A4,4 0 0 1 8,90 V10 A4,4 0 0 1 12,6 Z M17,14 H83 V70 H17 Z M17,70 L38,43 L52,59 L62,49 L83,70 Z M64,29 A7,7 0 1 1 78,29 A7,7 0 1 1 64,29 Z"/></svg>
+    <svg class="sticker s3" viewBox="0 0 100 100"><path fill-rule="evenodd" d="M22,4 H78 V96 H22 Z M33,12 H67 V46 H33 Z M33,54 H67 V88 H33 Z M25,9 H29 V15 H25 Z M25,22 H29 V28 H25 Z M25,35 H29 V41 H25 Z M25,48 H29 V54 H25 Z M25,61 H29 V67 H25 Z M25,74 H29 V80 H25 Z M25,87 H29 V93 H25 Z M71,9 H75 V15 H71 Z M71,22 H75 V28 H71 Z M71,35 H75 V41 H71 Z M71,48 H75 V54 H71 Z M71,61 H75 V67 H71 Z M71,74 H75 V80 H71 Z M71,87 H75 V93 H71 Z"/></svg>
+    <svg class="sticker s4" viewBox="0 0 100 100"><path fill-rule="evenodd" d="M4,50 A46,46 0 1 1 96,50 A46,46 0 1 1 4,50 Z M14,50 A36,36 0 1 1 86,50 A36,36 0 1 1 14,50 Z M19,50 A31,31 0 1 1 81,50 A31,31 0 1 1 19,50 Z M65,50 L57.5,63 L42.5,63 L35,50 L42.5,37 L57.5,37 Z"/></svg>
 
     <span class="chip">PHOTOBOOTH</span>
     <h1>Foto kamu<span>sudah siap!</span></h1>
