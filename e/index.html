@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>Galeri Event · Kawula Booth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    /* Gaya sama dengan halaman sesi (/s/): kanvas lavender, kartu putih, aksen ungu grape, stiker retro. */
+    :root {
+      --grape: #8a3fc9; --grape-deep: #6e2ba8; --grape-soft: #f3eafb;
+      --canvas: #f8f6fb; --line: #eee9f4; --ink: #1f1a26; --muted: #6f5e82; --faint: #b3a8c0;
+      --sun: #ffe566; --sky: #b8e4f9; --mint: #b8f4d4; --lavender: #ebddf8; --ember: #ff8142;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--canvas); color: var(--ink); }
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+
+    .bar { background: var(--grape); color: #fff; text-align: center; font: 400 13px "Bowlby One", Inter, sans-serif;
+           letter-spacing: .08em; padding: 10px 16px; }
+    .page { position: relative; overflow: hidden; min-height: calc(100vh - 38px); }
+    .wrap { position: relative; max-width: 860px; margin: 0 auto; padding: 26px 16px 40px; }
+
+    .sticker { position: absolute; pointer-events: none; height: auto; overflow: visible; stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; }
+    svg.sticker { aspect-ratio: 1 / 1; }
+    .s1 { width: 62px; top: 14px; left: -8px; fill: var(--sun); transform: rotate(-12deg); }
+    .s2 { width: 46px; top: 96px; right: 0; fill: var(--lavender); transform: rotate(14deg); }
+
+    .chip { display: block; width: fit-content; margin: 0 auto 14px; background: var(--grape-soft); color: var(--grape-deep);
+            font-weight: 700; font-size: 12px; letter-spacing: .06em; padding: 6px 14px; border-radius: 12px; }
+    h1 { font: 400 clamp(28px, 7vw, 42px)/1.05 "Bowlby One", Inter, sans-serif; text-align: center; margin: 0; }
+    h1 span { display: block; color: var(--grape); }
+    .sub { text-align: center; color: var(--muted); font-size: 14px; margin: 12px auto 0; max-width: 460px; line-height: 1.5; }
+
+    .search { position: sticky; top: 0; z-index: 5; margin: 22px -16px 0; padding: 10px 16px; background: rgba(248, 246, 251, .92);
+              backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+    .search label { position: relative; display: block; max-width: 460px; margin: 0 auto; }
+    .search svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--muted); }
+    .search input { width: 100%; border: 1.5px solid var(--line); background: #fff; border-radius: 999px; padding: 13px 16px 13px 44px;
+                    font: 500 15px Inter, system-ui, sans-serif; color: var(--ink); outline: none; }
+    .search input:focus { border-color: var(--grape); box-shadow: 0 0 0 4px var(--grape-soft); }
+    .count { text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 8px; }
+
+    .group { margin-top: 22px; }
+    .group h2 { display: flex; align-items: center; gap: 8px; font: 700 14px Inter, system-ui, sans-serif; color: var(--ink); margin: 0 0 10px 2px; }
+    .group h2 small { font-weight: 600; color: var(--muted); }
+    .group h2::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--grape); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    @media (max-width: 420px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+
+    .card { display: block; text-decoration: none; color: inherit; background: #fff; border: 1px solid var(--line); border-radius: 18px;
+            padding: 8px; box-shadow: 0 6px 18px rgba(91, 58, 122, .06); transition: transform .12s ease, box-shadow .12s ease; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(91, 58, 122, .12); }
+    .cover { position: relative; aspect-ratio: 3 / 4; border-radius: 12px; background: var(--lavender); overflow: hidden;
+             display: grid; place-items: center; }
+    .cover img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .25s ease; }
+    .cover img.on { opacity: 1; }
+    .cover .ph { position: absolute; color: var(--faint); font-size: 12px; font-weight: 600; }
+    .meta { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 4px 2px; gap: 6px; }
+    .time { font-weight: 800; font-size: 15px; }
+    .code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: var(--muted); }
+
+    .state { text-align: center; padding: 44px 16px; color: var(--muted); background: #fff; border: 1px solid var(--line);
+             border-radius: 24px; margin-top: 22px; }
+    .state h2 { color: var(--ink); font: 400 20px "Bowlby One", Inter, sans-serif; margin: 14px 0 6px; }
+    .spinner { width: 36px; height: 36px; border-radius: 50%; border: 4px solid var(--grape-soft); border-top-color: var(--grape);
+               margin: 0 auto; animation: spin .9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    footer { text-align: center; color: var(--faint); font-size: 12px; margin-top: 30px; }
+    footer b { color: var(--grape); font-family: "Bowlby One", Inter, sans-serif; font-weight: 400; letter-spacing: .04em; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="bar">KAWULA BOOTH · GALERI EVENT</div>
+  <div class="page">
+  <main class="wrap">
+    <svg class="sticker s1" viewBox="0 0 100 100"><path fill-rule="evenodd" d="M14,30 H32 L37,20 H63 L68,30 H86 A8,8 0 0 1 94,38 V80 A8,8 0 0 1 86,88 H14 A8,8 0 0 1 6,80 V38 A8,8 0 0 1 14,30 Z M15,30 V24 H26 V30 Z M31,59 A19,19 0 1 1 69,59 A19,19 0 1 1 31,59 Z M40,59 A10,10 0 1 1 60,59 A10,10 0 1 1 40,59 Z M75,36 H87 V44 H75 Z"/></svg>
+    <svg class="sticker s2" viewBox="0 0 100 100"><path fill-rule="evenodd" d="M12,6 H88 A4,4 0 0 1 92,10 V90 A4,4 0 0 1 88,94 H12 A4,4 0 0 1 8,90 V10 A4,4 0 0 1 12,6 Z M17,14 H83 V70 H17 Z M17,70 L38,43 L52,59 L62,49 L83,70 Z M64,29 A7,7 0 1 1 78,29 A7,7 0 1 1 64,29 Z"/></svg>
+
+    <span class="chip">GALERI EVENT</span>
+    <h1 id="title">Semua foto<span>di event ini</span></h1>
+    <p class="sub">Cari sesimu berdasarkan jam foto, atau ketik kode yang tertera di hasil cetak (mis. 089F34FB).</p>
+
+    <div class="search" id="searchBar" hidden>
+      <label>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" type="search" inputmode="search" autocomplete="off" placeholder="Cari kode atau jam (mis. 19.2)">
+      </label>
+      <div class="count" id="count"></div>
+    </div>
+
+    <section id="loading" class="state"><div class="spinner"></div><h2>Memuat galeri…</h2></section>
+    <section id="message" class="state" hidden>
+      <div id="messageIcon" style="font-size:34px"></div>
+      <h2 id="messageTitle"></h2>
+      <div id="messageText"></div>
+    </section>
+
+    <div id="groups"></div>
+    <section id="noMatch" class="state" hidden><h2>Tidak ketemu</h2><div>Coba kode lain, atau cari berdasarkan jam fotonya.</div></section>
+
+    <footer>Dibuat dengan <b>KAWULA BOOTH</b></footer>
+  </main>
+  </div>
+
+  <script src="../s/config.js"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    var API_KEY = (window.KAWULA_CONFIG && window.KAWULA_CONFIG.driveApiKey) || "";
+    var API = "https://www.googleapis.com/drive/v3/files";
+    var FOLDER = "application/vnd.google-apps.folder";
+    var eventId = new URLSearchParams(location.search).get("g") || "";
+    var el = function (id) { return document.getElementById(id); };
+    var DAYS = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    var MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+
+    var sessions = [];        // { id, code, date, time, hourKey, el }
+    var coverQueue = [];      // folder id yang kartunya terlihat & belum punya sampul
+    var coverTimer = null;
+
+    function show(section) {
+      ["loading", "message"].forEach(function (s) { el(s).hidden = s !== section; });
+    }
+    function message(icon, title, text) {
+      el("messageIcon").textContent = icon; el("messageTitle").textContent = title; el("messageText").textContent = text;
+      show("message"); el("searchBar").hidden = true; el("groups").innerHTML = "";
+    }
+    function api(params, path) {
+      var qs = Object.keys(params).map(function (k) { return k + "=" + encodeURIComponent(params[k]); }).join("&");
+      return fetch(API + (path || "") + "?" + qs + "&key=" + encodeURIComponent(API_KEY))
+        .then(function (r) {
+          if (r.status === 403 || r.status === 404) { throw { kind: "gone" }; }
+          if (!r.ok) { throw { kind: "error" }; }
+          return r.json();
+        });
+    }
+
+    // Nama folder sesi dari booth: 20261004-192231_089f34fb → waktu lokal booth + kode.
+    function parseSession(f) {
+      var m = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})_([0-9a-z]+)/i.exec(f.name);
+      if (!m) { return null; }
+      var d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+      return {
+        id: f.id,
+        code: m[7].toUpperCase(),
+        date: d,
+        time: m[4] + "." + m[5],
+        hourKey: m[1] + m[2] + m[3] + m[4],
+        hourLabel: DAYS[d.getDay()] + ", " + d.getDate() + " " + MONTHS[d.getMonth()] + " · " + m[4] + ".00–" + m[4] + ".59",
+      };
+    }
+
+    function listSessions(pageToken, acc) {
+      var params = {
+        q: "'" + eventId + "' in parents and mimeType = '" + FOLDER + "' and trashed = false",
+        fields: "nextPageToken,files(id,name)", pageSize: 1000, orderBy: "name desc",
+      };
+      if (pageToken) { params.pageToken = pageToken; }
+      return api(params).then(function (data) {
+        acc = acc.concat(data.files || []);
+        return data.nextPageToken ? listSessions(data.nextPageToken, acc) : acc;
+      });
+    }
+
+    // ── Sampul: muat per batch hanya untuk kartu yang terlihat ──────────────
+    var observer = "IntersectionObserver" in window ? new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { observer.unobserve(e.target); queueCover(e.target.dataset.id); }
+      });
+    }, { rootMargin: "300px" }) : null;
+
+    function queueCover(id) {
+      coverQueue.push(id);
+      clearTimeout(coverTimer);
+      coverTimer = setTimeout(flushCovers, 120);
+    }
+
+    function rank(name) {
+      var n = name.toLowerCase();
+      if (/^foto-bingkai\./.test(n)) return 0;
+      if (/^foto-1\./.test(n)) return 1;
+      if (/^foto-\d+\./.test(n)) return 2;
+      if (/\.(jpe?g|png)$/.test(n)) return 3;
+      return 9; // GIF besar — paling akhir
+    }
+
+    function flushCovers() {
+      while (coverQueue.length) {
+        var batch = coverQueue.splice(0, 20);
+        loadCovers(batch);
+      }
+    }
+
+    function loadCovers(ids) {
+      var q = "(" + ids.map(function (id) { return "'" + id + "' in parents"; }).join(" or ") + ") and mimeType contains 'image/' and trashed = false";
+      api({ q: q, fields: "files(id,name,parents)", pageSize: 1000 }).then(function (data) {
+        var best = {};
+        (data.files || []).forEach(function (f) {
+          var parent = (f.parents || [])[0];
+          if (!parent) return;
+          var r = rank(f.name);
+          if (!best[parent] || r < best[parent].r) { best[parent] = { id: f.id, r: r }; }
+        });
+        ids.forEach(function (id) {
+          var card = document.querySelector('.card[data-id="' + id + '"]');
+          if (!card) return;
+          var cover = best[id];
+          var ph = card.querySelector(".ph");
+          if (!cover) { ph.textContent = "Foto sedang diupload"; return; }
+          var img = card.querySelector("img");
+          img.onload = function () { img.classList.add("on"); ph.hidden = true; };
+          img.onerror = function () {
+            if (!img.dataset.retry) { img.dataset.retry = "1"; img.src = "https://lh3.googleusercontent.com/d/" + encodeURIComponent(cover.id) + "=w400"; }
+          };
+          img.src = "https://drive.google.com/thumbnail?id=" + encodeURIComponent(cover.id) + "&sz=w400";
+        });
+      }).catch(function () {
+        ids.forEach(function (id) {
+          var ph = document.querySelector('.card[data-id="' + id + '"] .ph');
+          if (ph) ph.textContent = "Ketuk untuk membuka";
+        });
+      });
+    }
+
+    // ── Tampilan ────────────────────────────────────────────────────────────
+    function render() {
+      var groups = el("groups");
+      groups.innerHTML = "";
+      var current = null, grid = null;
+      sessions.forEach(function (s) {
+        if (!current || current.key !== s.hourKey) {
+          var section = document.createElement("section");
+          section.className = "group";
+          var h = document.createElement("h2");
+          h.textContent = s.hourLabel + " ";
+          var small = document.createElement("small");
+          h.appendChild(small);
+          grid = document.createElement("div");
+          grid.className = "grid";
+          section.appendChild(h); section.appendChild(grid); groups.appendChild(section);
+          current = { key: s.hourKey, small: small, n: 0, section: section };
+          s.group = current;
+        }
+        s.group = current;
+        current.n++;
+        current.small.textContent = "· " + current.n + " sesi";
+
+        var a = document.createElement("a");
+        a.className = "card";
+        a.dataset.id = s.id;
+        a.href = "../s/?f=" + encodeURIComponent(s.id) + "&s=" + encodeURIComponent(s.code) + "&g=" + encodeURIComponent(eventId);
+        a.innerHTML = '<div class="cover"><img alt=""><span class="ph">Memuat…</span></div>'
+                    + '<div class="meta"><span class="time"></span><span class="code"></span></div>';
+        a.querySelector(".time").textContent = s.time;
+        a.querySelector(".code").textContent = "#" + s.code;
+        a.querySelector("img").alt = "Sesi " + s.code + " jam " + s.time;
+        grid.appendChild(a);
+        s.el = a;
+        if (observer) { observer.observe(a); } else { queueCover(s.id); }
+      });
+    }
+
+    function filter() {
+      var q = el("q").value.trim().toUpperCase().replace(/^#/, "").replace(":", ".");
+      var shown = 0, perGroup = {};
+      sessions.forEach(function (s) {
+        var hit = !q || s.code.indexOf(q) === 0 || s.time.indexOf(q) === 0;
+        s.el.hidden = !hit;
+        if (hit) { shown++; perGroup[s.group.key] = (perGroup[s.group.key] || 0) + 1; }
+      });
+      sessions.forEach(function (s) {
+        var n = perGroup[s.group.key] || 0;
+        s.group.section.hidden = n === 0;
+        s.group.small.textContent = "· " + n + " sesi";
+      });
+      el("count").textContent = q ? shown + " dari " + sessions.length + " sesi" : sessions.length + " sesi";
+      el("noMatch").hidden = shown > 0;
+    }
+
+    // ── Mulai ───────────────────────────────────────────────────────────────
+    if (!/^[A-Za-z0-9_-]{10,}$/.test(eventId)) {
+      message("🔗", "Link tidak valid", "Buka galeri dari link atau QR yang dibagikan penyelenggara event.");
+      return;
+    }
+    if (!API_KEY || API_KEY.indexOf("PASTE") === 0) {
+      message("⚙️", "Halaman belum dikonfigurasi", "Pemilik booth perlu mengisi Google API key di config.js.");
+      return;
+    }
+
+    api({ fields: "name" }, "/" + encodeURIComponent(eventId)).then(function (folder) {
+      // Nama folder event: "2026-10-04 Wisuda UI" → tampilkan nama event saja.
+      var name = (folder.name || "").replace(/^\d{4}-\d{2}-\d{2}\s+/, "");
+      if (name) {
+        el("title").innerHTML = "";
+        el("title").appendChild(document.createTextNode(name));
+        var span = document.createElement("span"); span.textContent = "Galeri Foto"; el("title").appendChild(span);
+        document.title = name + " · Galeri Kawula Booth";
+      }
+      return listSessions(null, []);
+    }).then(function (files) {
+      sessions = files.map(parseSession).filter(Boolean);
+      if (sessions.length === 0) {
+        message("📷", "Belum ada foto", "Foto dari booth akan muncul di sini setelah diupload. Coba buka lagi nanti.");
+        return;
+      }
+      el("loading").hidden = true;
+      el("searchBar").hidden = false;
+      render();
+      filter();
+      el("q").addEventListener("input", filter);
+    }).catch(function (err) {
+      if (err && err.kind === "gone") {
+        message("🔒", "Galeri tidak aktif", "Penyelenggara sudah menutup galeri online event ini.");
+      } else {
+        message("⚠️", "Gagal memuat galeri", "Periksa koneksi internet lalu muat ulang halaman ini.");
+      }
+    });
+  })();
+  </script>
+</body>
+</html>
