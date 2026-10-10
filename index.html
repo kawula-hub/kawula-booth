@@ -2,22 +2,458 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kawula Booth</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>Foto Kamu · Kawula Booth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 48px auto; padding: 0 16px; color: #1f1a26; line-height: 1.6; }
-    h1 { color: #8a3fc9; }
-    a { color: #6e2ba8; }
+    /* Gaya Kawula Booth — sama dengan layar booth: kanvas lavender, kartu putih, aksen ungu grape, stiker retro. */
+    :root {
+      --grape: #8a3fc9; --grape-deep: #6e2ba8; --grape-soft: #f3eafb;
+      --canvas: #f8f6fb; --line: #eee9f4; --ink: #1f1a26; --muted: #6f5e82; --faint: #b3a8c0;
+      --sun: #ffe566; --sky: #b8e4f9; --mint: #b8f4d4; --lavender: #ebddf8; --ember: #ff8142;
+      --stage: #1f1a26;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--canvas); color: var(--ink); }
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+
+    .bar { background: var(--grape); color: #fff; text-align: center; font: 400 13px "Bowlby One", Inter, sans-serif;
+           letter-spacing: .08em; padding: 10px 16px; }
+    .page { position: relative; overflow: hidden; min-height: calc(100vh - 38px); }
+    .wrap { position: relative; max-width: 560px; margin: 0 auto; padding: 26px 16px 40px; }
+
+    /* Stiker dekorasi tema foto (tidak bisa disentuh), sama dengan layar awal booth */
+    .sticker { position: absolute; pointer-events: none; height: auto; overflow: visible; stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; }
+    .s1 { width: 62px; top: 14px; left: -8px; fill: var(--sun); transform: rotate(-12deg); }
+    .s2 { width: 46px; top: 112px; right: 0; fill: var(--lavender); transform: rotate(14deg); }
+    .s3 { width: 46px; top: 326px; left: -12px; fill: var(--sky); transform: rotate(8deg); }
+    .s4 { width: 42px; bottom: 116px; right: -6px; fill: var(--ember); transform: rotate(-10deg); }
+
+    .chip { display: block; width: fit-content; margin: 0 auto 14px; background: var(--grape-soft); color: var(--grape-deep);
+            font-weight: 700; font-size: 12px; letter-spacing: .06em; padding: 6px 14px; border-radius: 12px; }
+    h1 { font: 400 clamp(30px, 9vw, 44px)/1.02 "Bowlby One", Inter, sans-serif; text-align: center; margin: 0; letter-spacing: .01em; }
+    h1 span { display: block; color: var(--grape); }
+    .code { text-align: center; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; color: var(--muted); margin-top: 12px; }
+    .pill { display: flex; width: fit-content; margin: 12px auto 0; align-items: center; gap: 8px; background: #fff;
+            border: 1.5px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 12.5px; color: var(--muted); }
+    .pill b { font-family: "JetBrains Mono", ui-monospace, monospace; color: var(--grape-deep); font-weight: 600; }
+    .pill svg { width: 15px; height: 15px; flex: none; color: var(--grape); }
+
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 24px; padding: 14px; margin-top: 22px;
+            box-shadow: 0 10px 30px rgba(91, 58, 122, .08); }
+
+    .stage { position: relative; width: 100%; background: var(--stage); border-radius: 18px; overflow: hidden; aspect-ratio: 1 / 1; }
+    /* Media mengisi panggung secara absolut agar ukuran asli foto tidak pernah melebarkan halaman. */
+    #media { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    #media img, #media video { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .nav { position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border-radius: 50%;
+           border: 0; background: rgba(255, 255, 255, .92); color: var(--grape-deep); cursor: pointer; display: grid; place-items: center;
+           box-shadow: 0 2px 8px rgba(0, 0, 0, .18); }
+    .nav:disabled { opacity: 0; pointer-events: none; }
+    .nav.prev { left: 12px; } .nav.next { right: 12px; }
+    .tool { position: absolute; top: 12px; width: 38px; height: 38px; border: 0; border-radius: 12px; background: rgba(255, 255, 255, .92);
+            color: var(--grape-deep); cursor: pointer; display: grid; place-items: center; }
+    .tool:hover, .nav:not(:disabled):hover { background: #fff; }
+    .tool.full { right: 12px; } .tool.save { right: 56px; }
+    .counter { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 12.5px;
+               font-weight: 700; background: var(--grape); padding: 4px 12px; border-radius: 999px; }
+    .badge { position: absolute; top: 14px; left: 14px; background: var(--sun); color: var(--ink); border: 2px solid var(--ink);
+             font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; letter-spacing: .02em; }
+    svg { width: 18px; height: 18px; }
+    svg.sticker { height: auto; aspect-ratio: 1 / 1; }
+
+    .thumbs { display: flex; gap: 8px; overflow-x: auto; padding: 14px 2px 4px; scrollbar-width: none; }
+    .thumbs::-webkit-scrollbar { display: none; }
+    .thumb { position: relative; flex: none; width: 60px; height: 60px; border-radius: 14px; overflow: hidden; padding: 0;
+             border: 3px solid transparent; background: var(--lavender); cursor: pointer; }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .thumb.active { border-color: var(--grape); box-shadow: 0 0 0 2px #fff inset; }
+    .thumb .play { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; background: rgba(31, 26, 38, .2); }
+    .thumb .play svg { width: 20px; height: 20px; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .5)); }
+
+    .btn { width: 100%; margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 10px;
+           background: var(--grape); color: #fff; border: 0; border-radius: 999px; padding: 16px 18px;
+           font: 700 16px Inter, system-ui, sans-serif; cursor: pointer; box-shadow: 0 6px 18px rgba(138, 63, 201, .32); }
+    .btn:hover { background: var(--grape-deep); }
+    .btn:disabled { opacity: .65; cursor: progress; }
+    .hint { text-align: center; color: var(--muted); font-size: 13px; margin-top: 14px; line-height: 1.5; }
+
+    .state { text-align: center; padding: 44px 16px; color: var(--muted); background: #fff; border: 1px solid var(--line);
+             border-radius: 24px; margin-top: 22px; }
+    .state h2 { color: var(--ink); font: 400 20px "Bowlby One", Inter, sans-serif; margin: 14px 0 6px; }
+    .spinner { width: 36px; height: 36px; border-radius: 50%; border: 4px solid var(--grape-soft); border-top-color: var(--grape);
+               margin: 0 auto; animation: spin .9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    footer { text-align: center; color: var(--faint); font-size: 12px; margin-top: 26px; }
+    footer b { color: var(--grape); font-family: "Bowlby One", Inter, sans-serif; font-weight: 400; letter-spacing: .04em; }
+
+    #media img.broken { visibility: hidden; }
+    .stage:fullscreen { border-radius: 0; aspect-ratio: auto; }
+    .back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 14px; color: var(--grape-deep); font-weight: 700;
+            font-size: 13.5px; text-decoration: none; background: #fff; border: 1.5px solid var(--line); border-radius: 999px; padding: 7px 14px; }
+    .back:hover { border-color: var(--grape); }
+    .back svg { width: 15px; height: 15px; }
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
-  <h1>Kawula Booth</h1>
-  <p>Kawula Booth adalah aplikasi photobooth desktop untuk event. Foto disimpan di komputer booth,
-     lalu diunggah otomatis ke Google Drive milik pemilik booth sebagai cadangan dan untuk dibagikan ke tamu.</p>
-  <ul>
-    <li><a href="privacy.html">Kebijakan Privasi</a></li>
-    <li><a href="terms.html">Syarat Layanan</a></li>
-  </ul>
-  <p>Kontak: <a href="mailto:kawulaspace1@gmail.com">kawulaspace1@gmail.com</a></p>
+  <div class="bar">KAWULA BOOTH · FOTO KAMU</div>
+  <div class="page">
+  <main class="wrap">
+    <!-- Stiker tema foto — bentuk sama dengan layar booth (kamera, polaroid, strip film, lensa) -->
+    <svg class="sticker s1" viewBox="0 0 100 100"><path fill-rule="evenodd" d="M14,30 H32 L37,20 H63 L68,30 H86 A8,8 0 0 1 94,38 V80 A8,8 0 0 1 86,88 H14 A8,8 0 0 1 6,80 V38 A8,8 0 0 1 14,30 Z M15,30 V24 H26 V30 Z M31,59 A19,19 0 1 1 69,59 A19,19 0 1 1 31,59 Z M40,59 A10,10 0 1 1 60,59 A10,10 0 1 1 40,59 Z M75,36 H87 V44 H75 Z"/></svg>
+    <svg class="sticker s2" viewBox="0 0 100 100"><path fill-rule="evenodd" d="M12,6 H88 A4,4 0 0 1 92,10 V90 A4,4 0 0 1 88,94 H12 A4,4 0 0 1 8,90 V10 A4,4 0 0 1 12,6 Z M17,14 H83 V70 H17 Z M17,70 L38,43 L52,59 L62,49 L83,70 Z M64,29 A7,7 0 1 1 78,29 A7,7 0 1 1 64,29 Z"/></svg>
+    <svg class="sticker s3" viewBox="0 0 100 100"><path fill-rule="evenodd" d="M22,4 H78 V96 H22 Z M33,12 H67 V46 H33 Z M33,54 H67 V88 H33 Z M25,9 H29 V15 H25 Z M25,22 H29 V28 H25 Z M25,35 H29 V41 H25 Z M25,48 H29 V54 H25 Z M25,61 H29 V67 H25 Z M25,74 H29 V80 H25 Z M25,87 H29 V93 H25 Z M71,9 H75 V15 H71 Z M71,22 H75 V28 H71 Z M71,35 H75 V41 H71 Z M71,48 H75 V54 H71 Z M71,61 H75 V67 H71 Z M71,74 H75 V80 H71 Z M71,87 H75 V93 H71 Z"/></svg>
+    <svg class="sticker s4" viewBox="0 0 100 100"><path fill-rule="evenodd" d="M4,50 A46,46 0 1 1 96,50 A46,46 0 1 1 4,50 Z M14,50 A36,36 0 1 1 86,50 A36,36 0 1 1 14,50 Z M19,50 A31,31 0 1 1 81,50 A31,31 0 1 1 19,50 Z M65,50 L57.5,63 L42.5,63 L35,50 L42.5,37 L57.5,37 Z"/></svg>
+
+    <a class="back" id="backToEvent" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg>
+      Semua foto event
+    </a>
+    <span class="chip">PHOTOBOOTH</span>
+    <h1>Foto kamu<span>sudah siap!</span></h1>
+    <div class="code" id="code"></div>
+    <div class="pill" id="expiryPill" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <span>Link kadaluarsa dalam</span> <b id="countdown">–</b>
+    </div>
+    <section id="loading" class="state"><div class="spinner"></div><h2>Memuat foto…</h2></section>
+
+    <section id="message" class="state" hidden>
+      <div id="messageIcon" style="font-size:34px"></div>
+      <h2 id="messageTitle"></h2>
+      <div id="messageText"></div>
+    </section>
+
+    <section id="gallery" class="card" hidden>
+      <div class="stage" id="stage">
+        <div id="media"></div>
+        <span class="badge" id="badge" hidden></span>
+        <button class="tool save" id="saveOne" title="Download file ini" aria-label="Download file ini">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>
+        </button>
+        <button class="tool full" id="fullscreen" title="Layar penuh" aria-label="Layar penuh">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        </button>
+        <button class="nav prev" id="prev" aria-label="Sebelumnya">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <button class="nav next" id="next" aria-label="Berikutnya">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <span class="counter" id="counter"></span>
+      </div>
+
+      <div class="thumbs" id="thumbs"></div>
+
+      <button class="btn" id="downloadAll">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>
+        <span id="downloadAllText">Download Semua</span>
+      </button>
+      <div class="hint" id="moreHint" hidden>Sebagian foto mungkin masih diupload dari booth — halaman ini memperbarui otomatis.</div>
+    </section>
+
+    <footer>Dibuat dengan <b>KAWULA BOOTH</b></footer>
+  </main>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    var API_KEY = (window.KAWULA_CONFIG && window.KAWULA_CONFIG.driveApiKey) || "";
+    var params = new URLSearchParams(location.search);
+    var folderId = params.get("f") || "";
+    var code = (params.get("s") || "").replace(/[^0-9A-Za-z]/g, "").slice(0, 12);
+    var expiresAt = parseInt(params.get("x") || "0", 10) * 1000;
+
+    var el = function (id) { return document.getElementById(id); };
+    var files = [];
+    var index = 0;
+    var pollCount = 0;
+
+    // ── Jenis & urutan file dari nama yang diberikan booth ───────────────────
+    function classify(name) {
+      var n = name.toLowerCase(), m;
+      // Versi MP4 (untuk IG Story/Reels & WhatsApp) diputar sebagai video, tepat setelah versi GIF-nya.
+      if (/^live-bingkai\.(mp4|mov)$/.test(n)) return { order: 1.5, label: "Live · Video", animated: true, video: true };
+      if (/^animasi\.(mp4|mov)$/.test(n)) return { order: 2.5, label: "Video", animated: true, video: true };
+      if (/^foto-bingkai\./.test(n)) return { order: 0, label: "Foto", animated: false };
+      if (/^live-bingkai\./.test(n)) return { order: 1, label: "Live", animated: true };
+      if (/^animasi\./.test(n)) return { order: 2, label: "GIF", animated: true };
+      if ((m = /^foto-(\d+)\./.exec(n))) return { order: 10 + +m[1], label: "Foto " + m[1], animated: false };
+      if ((m = /^live-(\d+)\./.exec(n))) return { order: 100 + +m[1], label: "Live " + m[1], animated: true };
+      if (/\.(mp4|mov)$/.test(n)) return { order: 200, label: "Video", animated: true, video: true };
+      return { order: 300, label: "", animated: /\.gif$/.test(n) };
+    }
+
+    // File asli (termasuk GIF bergerak) dari alamat publik Google yang mengizinkan CORS.
+    // Catatan: googleapis.com/drive/v3/files/{id}?alt=media menolak (403) untuk file "siapa pun yang punya link",
+    // jadi API key hanya dipakai untuk membaca daftar file folder.
+    function mediaUrls(f) {
+      var id = encodeURIComponent(f.id);
+      return [
+        "https://drive.usercontent.google.com/download?id=" + id + "&export=view",
+        "https://lh3.googleusercontent.com/d/" + id,
+      ];
+    }
+    function mediaUrl(f) { return mediaUrls(f)[0]; }
+
+    /** Pasang src dengan cadangan: kalau alamat pertama gagal, coba alamat berikutnya. */
+    function setSrcWithFallback(node, urls) {
+      var i = 0;
+      node.onerror = function () {
+        if (++i < urls.length) { node.src = urls[i]; } else { node.onerror = null; node.classList.add("broken"); }
+      };
+      node.src = urls[0];
+    }
+    function thumbUrl(f) { return "https://drive.google.com/thumbnail?id=" + encodeURIComponent(f.id) + "&sz=w240"; }
+
+    // ── Status halaman ───────────────────────────────────────────────────────
+    function show(section) {
+      ["loading", "message", "gallery"].forEach(function (s) { el(s).hidden = s !== section; });
+    }
+    function message(icon, title, text) {
+      el("messageIcon").textContent = icon;
+      el("messageTitle").textContent = title;
+      el("messageText").textContent = text;
+      show("message");
+    }
+
+    // ── Hitung mundur ────────────────────────────────────────────────────────
+    function pad(n) { return (n < 10 ? "0" : "") + n; }
+    function tick() {
+      if (!expiresAt) return;
+      var left = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+      var d = Math.floor(left / 86400), h = Math.floor(left % 86400 / 3600), m = Math.floor(left % 3600 / 60), s = left % 60;
+      el("countdown").textContent = (d > 0 ? d + " hari " : "") + pad(h) + ":" + pad(m) + ":" + pad(s);
+      if (left === 0) { expired(); }
+    }
+    function expired() {
+      el("expiryPill").hidden = true;
+      message("⏳", "Link sudah kadaluarsa", "Foto dari sesi ini sudah tidak bisa diunduh lewat link ini. Hubungi penyelenggara event bila masih membutuhkannya.");
+    }
+
+    // ── Ambil daftar file folder sesi ────────────────────────────────────────
+    function load() {
+      var q = "'" + folderId + "' in parents and trashed = false";
+      var url = "https://www.googleapis.com/drive/v3/files?pageSize=100&fields=files(id,name,mimeType,size)"
+              + "&q=" + encodeURIComponent(q) + "&key=" + encodeURIComponent(API_KEY);
+      return fetch(url).then(function (r) {
+        if (r.status === 403 || r.status === 404) { throw { kind: "gone" }; }
+        if (!r.ok) { throw { kind: "error" }; }
+        return r.json();
+      }).then(function (data) {
+        return (data.files || [])
+          .filter(function (f) { return /^(image|video)\//.test(f.mimeType); })
+          .map(function (f) { var c = classify(f.name); return Object.assign({}, f, c); })
+          .sort(function (a, b) { return a.order - b.order || a.name.localeCompare(b.name); });
+      });
+    }
+
+    function refresh() {
+      if (expiresAt && Date.now() > expiresAt) { expired(); return; }
+      load().then(function (list) {
+        var changed = list.length !== files.length;
+        if (list.length === 0) {
+          message("📤", "Foto sedang diupload", "Booth sedang mengirim foto ke cloud. Halaman ini akan memuat otomatis — biarkan tetap terbuka.");
+        } else if (changed) {
+          var currentId = files[index] && files[index].id;
+          files = list;
+          var keep = files.findIndex(function (f) { return f.id === currentId; });
+          index = keep >= 0 ? keep : 0;
+          render();
+          show("gallery");
+        }
+        schedule(list.length === 0 ? 10000 : 30000);
+      }).catch(function (err) {
+        if (err && err.kind === "gone") {
+          message("🔒", "Link tidak aktif", "Link ini sudah kadaluarsa atau tidak ditemukan.");
+        } else if (files.length === 0) {
+          message("⚠️", "Gagal memuat foto", "Periksa koneksi internet lalu muat ulang halaman ini.");
+          schedule(15000);
+        }
+      });
+    }
+    function schedule(ms) {
+      // Memperbarui sampai ±15 menit setelah dibuka (upload dari booth biasanya selesai jauh sebelum itu).
+      if (++pollCount < 60) { setTimeout(refresh, ms); el("moreHint").hidden = files.length === 0; }
+      else { el("moreHint").hidden = true; }
+    }
+
+    // ── Galeri ───────────────────────────────────────────────────────────────
+    function render() {
+      var thumbs = el("thumbs");
+      thumbs.innerHTML = "";
+      files.forEach(function (f, i) {
+        var b = document.createElement("button");
+        b.className = "thumb" + (i === index ? " active" : "");
+        b.setAttribute("aria-label", f.label || f.name);
+        var img = document.createElement("img");
+        img.loading = "lazy";
+        img.alt = "";
+        img.src = thumbUrl(f);
+        img.onerror = function () { if (!f.video) { img.onerror = null; img.src = "https://lh3.googleusercontent.com/d/" + encodeURIComponent(f.id) + "=w240"; } };
+        b.appendChild(img);
+        if (f.animated) {
+          var p = document.createElement("span");
+          p.className = "play";
+          p.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+          b.appendChild(p);
+        }
+        b.onclick = function () { go(i); };
+        thumbs.appendChild(b);
+      });
+      el("downloadAllText").textContent = "Download Semua (" + files.length + " file)";
+      showCurrent();
+    }
+
+    function showCurrent() {
+      var f = files[index];
+      var media = el("media");
+      media.innerHTML = "";
+      var node;
+      if (f.video) {
+        node = document.createElement("video");
+        // Tanpa suara, jadi boleh autoplay di HP (iOS/Android hanya mengizinkan autoplay yang muted).
+        node.controls = true; node.playsInline = true; node.loop = true; node.muted = true; node.autoplay = true;
+      } else {
+        node = document.createElement("img");
+        node.alt = f.label || "Foto";
+      }
+      setSrcWithFallback(node, mediaUrls(f));
+      media.appendChild(node);
+      el("counter").textContent = (index + 1) + " / " + files.length;
+      el("badge").textContent = f.label;
+      el("badge").hidden = !f.label;
+      el("prev").disabled = index === 0;
+      el("next").disabled = index === files.length - 1;
+      Array.prototype.forEach.call(el("thumbs").children, function (t, i) {
+        t.classList.toggle("active", i === index);
+        if (i === index) t.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+      });
+    }
+
+    function go(i) {
+      if (i < 0 || i >= files.length) return;
+      index = i;
+      showCurrent();
+    }
+
+    // Geser kiri/kanan di layar sentuh.
+    var touchX = null;
+    el("stage").addEventListener("touchstart", function (e) { touchX = e.touches[0].clientX; }, { passive: true });
+    el("stage").addEventListener("touchend", function (e) {
+      if (touchX === null) return;
+      var dx = e.changedTouches[0].clientX - touchX;
+      if (Math.abs(dx) > 45) go(index + (dx < 0 ? 1 : -1));
+      touchX = null;
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft") go(index - 1);
+      if (e.key === "ArrowRight") go(index + 1);
+    });
+    el("prev").onclick = function () { go(index - 1); };
+    el("next").onclick = function () { go(index + 1); };
+    el("fullscreen").onclick = function () {
+      var s = el("stage");
+      if (document.fullscreenElement) { document.exitFullscreen(); }
+      else if (s.requestFullscreen) { s.requestFullscreen(); }
+      else if (s.webkitRequestFullscreen) { s.webkitRequestFullscreen(); }
+    };
+
+    // ── Download ─────────────────────────────────────────────────────────────
+    function fetchBlob(f) {
+      var urls = mediaUrls(f);
+      var attempt = function (i) {
+        return fetch(urls[i]).then(function (r) {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.blob();
+        }).catch(function (err) {
+          if (i + 1 < urls.length) return attempt(i + 1);
+          throw err;
+        });
+      };
+      return attempt(0);
+    }
+    function saveBlob(blob, name) {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+    }
+    function uniqueNames(list) {
+      var used = {};
+      return list.map(function (f) {
+        var name = f.name, i = 1;
+        while (used[name]) { name = f.name.replace(/(\.[^.]+)?$/, "-" + (++i) + "$1"); }
+        used[name] = true;
+        return name;
+      });
+    }
+
+    el("saveOne").onclick = function () {
+      var f = files[index];
+      fetchBlob(f).then(function (b) { saveBlob(b, f.name); }).catch(function () { window.open(mediaUrl(f), "_blank"); });
+    };
+
+    el("downloadAll").onclick = function () {
+      var btn = el("downloadAll"), text = el("downloadAllText");
+      if (!window.JSZip) { alert("Gagal memuat pembuat ZIP. Download satu per satu lewat tombol unduh di foto."); return; }
+      btn.disabled = true;
+      var zip = new JSZip(), names = uniqueNames(files), done = 0;
+      text.textContent = "Menyiapkan 0/" + files.length + "…";
+      Promise.all(files.map(function (f, i) {
+        return fetchBlob(f).then(function (blob) {
+          zip.file(names[i], blob);
+          text.textContent = "Menyiapkan " + (++done) + "/" + files.length + "…";
+        });
+      })).then(function () {
+        text.textContent = "Membuat ZIP…";
+        return zip.generateAsync({ type: "blob" });
+      }).then(function (blob) {
+        saveBlob(blob, "kawula-booth-" + (code || "foto") + ".zip");
+      }).catch(function () {
+        // Cadangan terakhir: folder Google Drive punya tombol "Download semua" sendiri.
+        if (confirm("Sebagian file gagal diunduh lewat halaman ini. Buka folder Google Drive untuk mengunduh semuanya?")) {
+          window.open("https://drive.google.com/drive/folders/" + encodeURIComponent(folderId), "_blank");
+        }
+      }).then(function () {
+        btn.disabled = false;
+        text.textContent = "Download Semua (" + files.length + " file)";
+      });
+    };
+
+    // ── Mulai ────────────────────────────────────────────────────────────────
+    el("code").textContent = code ? "#" + code.toUpperCase() : "";
+    // Dibuka dari galeri event (/e/) → tombol kembali ke galeri.
+    var galleryId = params.get("g") || "";
+    if (/^[A-Za-z0-9_-]{10,}$/.test(galleryId)) {
+      el("backToEvent").href = "../e/?g=" + encodeURIComponent(galleryId);
+      el("backToEvent").hidden = false;
+    }
+    if (!/^[A-Za-z0-9_-]{10,}$/.test(folderId)) {
+      message("🔗", "Link tidak valid", "Scan ulang QR dari hasil cetak foto kamu.");
+      return;
+    }
+    if (!API_KEY || API_KEY.indexOf("PASTE") === 0) {
+      message("⚙️", "Halaman belum dikonfigurasi", "Pemilik booth perlu mengisi Google API key di config.js.");
+      return;
+    }
+    if (expiresAt) {
+      el("expiryPill").hidden = false;
+      tick();
+      if (Date.now() > expiresAt) return;
+      setInterval(tick, 1000);
+    }
+    refresh();
+  })();
+  </script>
 </body>
 </html>
