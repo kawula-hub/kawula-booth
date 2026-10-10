@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex">
-  <title>Galeri Event · Kawula Booth</title>
+  <title>Galeri Kawula</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
   <style>
@@ -57,7 +57,6 @@
              display: grid; place-items: center; }
     .cover img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .25s ease; }
     .cover img.on { opacity: 1; }
-    .cover .ph { position: absolute; color: var(--faint); font-size: 12px; font-weight: 600; }
     .meta { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 4px 2px; gap: 6px; }
     .time { font-weight: 800; font-size: 15px; }
     .code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: var(--muted); }
@@ -80,8 +79,8 @@
     <svg class="sticker s1" viewBox="0 0 100 100"><path fill-rule="evenodd" d="M14,30 H32 L37,20 H63 L68,30 H86 A8,8 0 0 1 94,38 V80 A8,8 0 0 1 86,88 H14 A8,8 0 0 1 6,80 V38 A8,8 0 0 1 14,30 Z M15,30 V24 H26 V30 Z M31,59 A19,19 0 1 1 69,59 A19,19 0 1 1 31,59 Z M40,59 A10,10 0 1 1 60,59 A10,10 0 1 1 40,59 Z M75,36 H87 V44 H75 Z"/></svg>
     <svg class="sticker s2" viewBox="0 0 100 100"><path fill-rule="evenodd" d="M12,6 H88 A4,4 0 0 1 92,10 V90 A4,4 0 0 1 88,94 H12 A4,4 0 0 1 8,90 V10 A4,4 0 0 1 12,6 Z M17,14 H83 V70 H17 Z M17,70 L38,43 L52,59 L62,49 L83,70 Z M64,29 A7,7 0 1 1 78,29 A7,7 0 1 1 64,29 Z"/></svg>
 
-    <span class="chip">GALERI EVENT</span>
-    <h1 id="title">Semua foto<span>di event ini</span></h1>
+    <span class="chip" id="eventChip">GALERI EVENT</span>
+    <h1 id="title">Galeri<span>Kawula</span></h1>
     <p class="sub">Cari sesimu berdasarkan jam foto, atau ketik kode yang tertera di hasil cetak (mis. 089F34FB).</p>
 
     <div class="search" id="searchBar" hidden>
@@ -119,9 +118,7 @@
     var DAYS = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
     var MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 
-    var sessions = [];        // { id, code, date, time, hourKey, el }
-    var coverQueue = [];      // folder id yang kartunya terlihat & belum punya sampul
-    var coverTimer = null;
+    var sessions = [];        // { id, code, date, time, hourKey, cover, el }
 
     function show(section) {
       ["loading", "message"].forEach(function (s) { el(s).hidden = s !== section; });
@@ -167,19 +164,8 @@
       });
     }
 
-    // ── Sampul: muat per batch hanya untuk kartu yang terlihat ──────────────
-    var observer = "IntersectionObserver" in window ? new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) { observer.unobserve(e.target); queueCover(e.target.dataset.id); }
-      });
-    }, { rootMargin: "300px" }) : null;
-
-    function queueCover(id) {
-      coverQueue.push(id);
-      clearTimeout(coverTimer);
-      coverTimer = setTimeout(flushCovers, 120);
-    }
-
+    // ── Sampul: cek semua sesi per batch (20 folder per permintaan) ─────────
+    // Sesi tanpa foto (tamu batal sebelum berfoto — folder dibuat saat memilih layout) tidak ditampilkan.
     function rank(name) {
       var n = name.toLowerCase();
       if (/^foto-bingkai\./.test(n)) return 0;
@@ -189,16 +175,9 @@
       return 9; // GIF besar — paling akhir
     }
 
-    function flushCovers() {
-      while (coverQueue.length) {
-        var batch = coverQueue.splice(0, 20);
-        loadCovers(batch);
-      }
-    }
-
-    function loadCovers(ids) {
+    function coversFor(ids) {
       var q = "(" + ids.map(function (id) { return "'" + id + "' in parents"; }).join(" or ") + ") and mimeType contains 'image/' and trashed = false";
-      api({ q: q, fields: "files(id,name,parents)", pageSize: 1000 }).then(function (data) {
+      return api({ q: q, fields: "files(id,name,parents)", pageSize: 1000 }).then(function (data) {
         var best = {};
         (data.files || []).forEach(function (f) {
           var parent = (f.parents || [])[0];
@@ -206,25 +185,34 @@
           var r = rank(f.name);
           if (!best[parent] || r < best[parent].r) { best[parent] = { id: f.id, r: r }; }
         });
-        ids.forEach(function (id) {
-          var card = document.querySelector('.card[data-id="' + id + '"]');
-          if (!card) return;
-          var cover = best[id];
-          var ph = card.querySelector(".ph");
-          if (!cover) { ph.textContent = "Foto sedang diupload"; return; }
-          var img = card.querySelector("img");
-          img.onload = function () { img.classList.add("on"); ph.hidden = true; };
-          img.onerror = function () {
-            if (!img.dataset.retry) { img.dataset.retry = "1"; img.src = "https://lh3.googleusercontent.com/d/" + encodeURIComponent(cover.id) + "=w400"; }
-          };
-          img.src = "https://drive.google.com/thumbnail?id=" + encodeURIComponent(cover.id) + "&sz=w400";
-        });
-      }).catch(function () {
-        ids.forEach(function (id) {
-          var ph = document.querySelector('.card[data-id="' + id + '"] .ph');
-          if (ph) ph.textContent = "Ketuk untuk membuka";
-        });
+        return best;
       });
+    }
+
+    /** Isi s.cover untuk semua sesi; maksimal 4 permintaan berjalan bersamaan. */
+    function loadAllCovers(list) {
+      var batches = [];
+      for (var i = 0; i < list.length; i += 20) { batches.push(list.slice(i, i + 20)); }
+      var next = 0;
+      function worker() {
+        if (next >= batches.length) { return Promise.resolve(); }
+        var batch = batches[next++];
+        return coversFor(batch.map(function (s) { return s.id; })).then(function (best) {
+          batch.forEach(function (s) { s.cover = best[s.id] && best[s.id].id; });
+        }).then(worker);
+      }
+      var workers = [];
+      for (var w = 0; w < 4; w++) { workers.push(worker()); }
+      return Promise.all(workers);
+    }
+
+    function setCover(img, coverId) {
+      img.loading = "lazy";
+      img.onload = function () { img.classList.add("on"); };
+      img.onerror = function () {
+        if (!img.dataset.retry) { img.dataset.retry = "1"; img.src = "https://lh3.googleusercontent.com/d/" + encodeURIComponent(coverId) + "=w400"; }
+      };
+      img.src = "https://drive.google.com/thumbnail?id=" + encodeURIComponent(coverId) + "&sz=w400";
     }
 
     // ── Tampilan ────────────────────────────────────────────────────────────
@@ -254,14 +242,14 @@
         a.className = "card";
         a.dataset.id = s.id;
         a.href = "../s/?f=" + encodeURIComponent(s.id) + "&s=" + encodeURIComponent(s.code) + "&g=" + encodeURIComponent(eventId);
-        a.innerHTML = '<div class="cover"><img alt=""><span class="ph">Memuat…</span></div>'
+        a.innerHTML = '<div class="cover"><img alt=""></div>'
                     + '<div class="meta"><span class="time"></span><span class="code"></span></div>';
         a.querySelector(".time").textContent = s.time;
         a.querySelector(".code").textContent = "#" + s.code;
         a.querySelector("img").alt = "Sesi " + s.code + " jam " + s.time;
         grid.appendChild(a);
         s.el = a;
-        if (observer) { observer.observe(a); } else { queueCover(s.id); }
+        setCover(a.querySelector("img"), s.cover);
       });
     }
 
@@ -294,16 +282,18 @@
 
     api({ fields: "name" }, "/" + encodeURIComponent(eventId)).then(function (folder) {
       // Nama folder event: "2026-10-04 Wisuda UI" → tampilkan nama event saja.
+      // Judul tetap "Galeri Kawula"; nama event cukup di chip kecil di atasnya.
       var name = (folder.name || "").replace(/^\d{4}-\d{2}-\d{2}\s+/, "");
       if (name) {
-        el("title").innerHTML = "";
-        el("title").appendChild(document.createTextNode(name));
-        var span = document.createElement("span"); span.textContent = "Galeri Foto"; el("title").appendChild(span);
-        document.title = name + " · Galeri Kawula Booth";
+        el("eventChip").textContent = name.toUpperCase();
+        document.title = "Galeri Kawula · " + name;
       }
       return listSessions(null, []);
     }).then(function (files) {
-      sessions = files.map(parseSession).filter(Boolean);
+      var all = files.map(parseSession).filter(Boolean);
+      return loadAllCovers(all).then(function () { return all; });
+    }).then(function (all) {
+      sessions = all.filter(function (s) { return !!s.cover; });
       if (sessions.length === 0) {
         message("📷", "Belum ada foto", "Foto dari booth akan muncul di sini setelah diupload. Coba buka lagi nanti.");
         return;
