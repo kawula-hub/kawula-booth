@@ -170,10 +170,10 @@
     // Sesi tanpa foto (tamu batal sebelum berfoto — folder dibuat saat memilih layout) tidak ditampilkan.
     function rank(name) {
       var n = name.toLowerCase();
-      if (/^foto-bingkai./.test(n)) return 0;
-      if (/^foto-1./.test(n)) return 1;
-      if (/^foto-d+./.test(n)) return 2;
-      if (/.(jpe?g|png)$/.test(n)) return 3;
+      if (/^foto-bingkai\./.test(n)) return 0;
+      if (/^foto-1\./.test(n)) return 1;
+      if (/^foto-\d+\./.test(n)) return 2;
+      if (/\.(jpe?g|png)$/.test(n)) return 3;
       return 9; // GIF besar — paling akhir
     }
 
