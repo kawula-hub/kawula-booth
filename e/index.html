@@ -164,45 +164,42 @@
       });
     }
 
-    // ── Sampul: cek semua sesi per batch (20 folder per permintaan) ─────────
+    // ── Sampul: cek tiap sesi satu per satu ─────────────────────────────────
+    // Catatan: dengan API key publik, Google Drive MENOLAK (403) query yang menggabungkan
+    // beberapa folder sekaligus ("A in parents or B in parents"), jadi tiap sesi ditanya sendiri.
     // Sesi tanpa foto (tamu batal sebelum berfoto — folder dibuat saat memilih layout) tidak ditampilkan.
     function rank(name) {
       var n = name.toLowerCase();
-      if (/^foto-bingkai\./.test(n)) return 0;
-      if (/^foto-1\./.test(n)) return 1;
-      if (/^foto-\d+\./.test(n)) return 2;
-      if (/\.(jpe?g|png)$/.test(n)) return 3;
+      if (/^foto-bingkai./.test(n)) return 0;
+      if (/^foto-1./.test(n)) return 1;
+      if (/^foto-d+./.test(n)) return 2;
+      if (/.(jpe?g|png)$/.test(n)) return 3;
       return 9; // GIF besar — paling akhir
     }
 
-    function coversFor(ids) {
-      var q = "(" + ids.map(function (id) { return "'" + id + "' in parents"; }).join(" or ") + ") and mimeType contains 'image/' and trashed = false";
-      return api({ q: q, fields: "files(id,name,parents)", pageSize: 1000 }).then(function (data) {
-        var best = {};
+    function coverFor(sessionId) {
+      var q = "'" + sessionId + "' in parents and mimeType contains 'image/' and trashed = false";
+      return api({ q: q, fields: "files(id,name)", pageSize: 100 }).then(function (data) {
+        var best = null;
         (data.files || []).forEach(function (f) {
-          var parent = (f.parents || [])[0];
-          if (!parent) return;
           var r = rank(f.name);
-          if (!best[parent] || r < best[parent].r) { best[parent] = { id: f.id, r: r }; }
+          if (!best || r < best.r) { best = { id: f.id, r: r }; }
         });
-        return best;
+        return best && best.id;
       });
     }
 
-    /** Isi s.cover untuk semua sesi; maksimal 4 permintaan berjalan bersamaan. */
+    /** Isi s.cover untuk semua sesi; maksimal 6 permintaan berjalan bersamaan.
+     *  Satu sesi yang gagal dibaca cukup disembunyikan — galeri lainnya tetap tampil. */
     function loadAllCovers(list) {
-      var batches = [];
-      for (var i = 0; i < list.length; i += 20) { batches.push(list.slice(i, i + 20)); }
       var next = 0;
       function worker() {
-        if (next >= batches.length) { return Promise.resolve(); }
-        var batch = batches[next++];
-        return coversFor(batch.map(function (s) { return s.id; })).then(function (best) {
-          batch.forEach(function (s) { s.cover = best[s.id] && best[s.id].id; });
-        }).then(worker);
+        if (next >= list.length) { return Promise.resolve(); }
+        var s = list[next++];
+        return coverFor(s.id).then(function (id) { s.cover = id; }, function () { s.cover = null; }).then(worker);
       }
       var workers = [];
-      for (var w = 0; w < 4; w++) { workers.push(worker()); }
+      for (var w = 0; w < 6; w++) { workers.push(worker()); }
       return Promise.all(workers);
     }
 
